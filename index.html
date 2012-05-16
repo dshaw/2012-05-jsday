@@ -1,0 +1,562 @@
+<!doctype html>  
+<html lang="en">
+	
+	<head>
+		<meta charset="utf-8">
+        <title>@dshaw - Production Node.js Secrets</title>
+		<meta name="description" content="Node.js production lessons learned.">
+		<meta name="author" content="Daniel D. Shaw - @dshaw">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		
+		<link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+		
+		<link rel="stylesheet" href="css/reset.css">
+		<link rel="stylesheet" href="css/main.css">
+		<link rel="stylesheet" href="css/print.css" type="text/css" media="print">
+
+		<link rel="stylesheet" href="lib/zenburn.css">
+	</head>
+	
+	<body>
+		
+		<div id="reveal">
+
+			<!-- Used to fade in a background when a specific slide state is reached -->
+			<div class="state-background"></div>
+			
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+                <!-- Title slide -->
+                <section>
+                    <h1>Production Node.js Secrets</h1>
+                    <p class="intro">
+                        <img class=avatar src="./assets/angry_unicorn.png">
+                    </p>
+                    <h3 class="inverted">@dshaw</h3>
+                    <script>
+                        // Delicously hacky. Look away.
+                        if( navigator.userAgent.match( /(iPhone|iPad|iPod|Android)/i ) ) document.write( '<p style="color: rgba(0,0,0,0.3); text-shadow: none;">('+'Tap to navigate'+')</p>' );
+                    </script>
+                </section>
+
+                <section>
+                    <p>
+                        <img src="./assets/node-logo.png" style="padding: 4em">
+                    </p>
+                </section>
+
+                <!-- Background -->
+                <section>
+                    <section>
+                        <h2>Before Node.js there was</h2>
+
+                        <br>
+
+                        <h3>Large-scale government contracting</h3>
+                        <ul>
+                            <li class=fragment>Military and security</li>
+                            <li class=fragment>Healthcare</li>
+                            <li class=fragment>Education</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h2>Languages</h2>
+
+                        <h3>Java</h3>
+
+                        <h3>ColdFusion</h3>
+
+                        <h3>PHP</h3>
+
+                        <h3>Front-end JavaScript</h3>
+                    </section>
+                </section>
+
+                <!-- Startup Experience -->
+                <section>
+                    <section>
+                        <h2>Startup Experience</h2>
+                        <p style="float: left"><img class=highlight src="./assets/startuplife.jpg"></p>
+                        <h1 class=fragment>Storify</h1>
+                        <h1 class=fragment>Spreecast</h1>
+                        <h1 class=fragment>Voxer</h1>
+                    </section>
+                    <section>
+                        <h2>Storify</h2>
+                        <p><img class=highlight src="./assets/storify.jpg"></p>
+                        <h3 class=fragment>Express</h3>
+                        <h3 class=fragment>MongoDB / Mongoose</h3>
+                        <h3 class=fragment>Redis</h3>
+                    </section>
+                    <section>
+                        <h2>Spreecast</h2>
+                        <p><img class=highlight src="./assets/spreecast.png" style="padding: 10px"></p>
+                        <h3 class=fragment>Socket.io</h3>
+                        <h3 class=fragment>Redis</h3>
+                        <h3 class=fragment>(Express)</h3>
+                    </section>
+                    <section>
+                        <h2>Voxer</h2>
+                        <p><img class=highlight src="./assets/voxer_walkie.png"></p>
+                        <h3 class=fragment>Mobile</h3>
+                        <h3 class=fragment>Redis</h3>
+                        <h3 class=fragment>Riak</h3>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Building Apps for Production Deployment</h2>
+                        <p>Old School: Monolithic Apps</p>
+                        <img src="./assets/rails.png" style="width: 120px">
+                        <p>Pass everything through one master process and delegate.</p>
+                        <p>
+                            You can build Node apps like this<br>
+                            ...but you shouldn't.
+                        </p>
+                        <p style="color: rgba(0,0,0,.4)">(Check out NodeUp 6 for full rant.)</p>
+                    </section>
+                    <section>
+                        <h2>Building Apps for Production Deployment</h2>
+                        <p>
+                            The Event Loop is your friend,<br>
+                            until it's your enemy.
+                        </p>
+                        <pre><code>
+console.time('blocking-loop')
+for (var i = 0, len = 100000000; i < len; i++) { ; }
+console.timeEnd('blocking-loop');
+                        </code></pre>
+                        <p>Don't block.</p>
+                        <p>Don't stop the event loop.</p>
+                    </section>
+                    <section>
+                        <h2>Production Node.js</h2>
+                        <h3>2+ Processes</h3>
+                        <p>Think horizontal early.</p>
+                        <p>Most Node frameworks have a in Memory mode for local development. GTFO.</p>
+                        <p>Use Cluster or Mixture to prototype locally.</p>
+                    </section>
+                    <section>
+                        <h2>K.I.S.S.</h2>
+                        <h3>Keep It Small and Simple</h3>
+                        <p>Small, focused processes > Monolithic</p>
+                        <p>Applies to both modules and apps.</p>
+                        <p>Node.js core is kept intentionally simple.</p>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Node App Sanity</h2>
+                        <p>Listen to these events:</p>
+                        <ul class="bullet-points">
+                            <li>process Event: ‘uncaughtException’</li>
+                            <li>net Event: ‘error’</li>
+                        </ul>
+
+                        <p><br>
+
+                        <p>Longer stack traces</p>
+                        <pre><code>
+# default is 10.
+Error.stackTraceLimit = 25
+
+# MOAR...
+# Error.stackTraceLimit = Infinity
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h2>process uncaughtException</h2>
+                        <h3>Choose one:</h3>
+                        <p>Log, trace, exit(1).</p>
+                        <pre><code contenteditable>
+process.on('uncaughtException', function (err) {
+  console.error('uncaughtException:', err.message)
+  console.error(err.stack)
+  process.exit(1)
+})
+                        </code></pre>
+                        <p>Bury. <i>(Almost never the right answer.)</i></p>
+                        <pre><code>
+process.on('uncaughtException', function (err) {
+  console.error('Caught exception: ' + err)
+})
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h2>net error</h2>
+                        <h3>This means:</h3>
+                        <ul class="bullet-points" style="margin-bottom: 10px">
+                            <li>net.Server</li>
+                            <li>tls.Server</li>
+                            <li>http.Server</li>
+                            <li>https.Server</li>
+                            <li>
+                                ... and anything that inherits from these or creates an instance of the above.
+                                <sup title="Which is just about everything created with Node.js.">*</sup>
+                            </li>
+                        </ul>
+                        <pre><code>
+server.on('error', function (err) {
+  console.error(err)
+})
+                        </code></pre>
+                        <p>Remember: http(s), tls Servers inherit from net.</p>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Production Mode</h2>
+                    <p>Many larger platforms have a "production mode".</p>
+                    <p class=fragment>And default to "development mode".</p>
+                    <p class=fragment>Use production mode<sup>*</sup>.</p>
+                    <p class=fragment><br><sup>*</sup> Unless you know better.</p>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Express</h2>
+                        <p>Run in production mode in production</p>
+                        <pre><code>
+$ NODE_ENV=production node app.js
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h2>Express Sessions</h2>
+                        <p>connect-redis</p>
+                        <p>(2+ processes)</p>
+                        <pre><code>
+var SessionStore = require('connect-redis')
+app.configure(function(){
+  this.use(express.session({
+    key: 'skeleton'
+  , secret: 's3cret'
+  , store: new SessionStore({
+      cookie: { domain: '.example.com' }
+    , db: 1 // redis db
+    , host: 'redis.example.com'
+    })
+  }))
+})
+                        </code></pre>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Socket.io</h2>
+                        <p>Run in production mode in production</p>
+                        <pre><code>
+$ NODE_ENV=production node app.js
+                        </code></pre>
+                        <p>Rinse. Repeat.</p>
+                    </section>
+                    <section>
+                        <h2>Socket.io RedisStore</h2>
+                        <p>(2+ processes)</p>
+                        <pre><code>
+var sio = require('socket.io')
+  , RedisStore = sio.RedisStore
+  , io = sio.listen()
+
+io.configure(function () {
+  io.set('store', new RedisStore({
+    host: 'http://redis.example.com'
+  }))
+})
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h2>Socket.io RedisStore</h2>
+                        <h3>Production Config</h3>
+                        <pre><code>
+var redis = require('redis')
+  , redisClient = redis
+      .createClient(<span title="defined elsewhere">port</span>, <span title="defined elsewhere">hostname</span>)
+  , redisSub = redis
+      .createClient(<span title="defined elsewhere">port</span>, <span title="defined elsewhere">hostname</span>)
+
+redisClient.on('error', function (err) {
+  console.error(err)
+})
+
+redisSub.on('error', function (err) {
+  console.error(err)
+})
+                        </code></pre>
+                        <p>Setup AUTH and DB here too if you need them.</p>
+                    </section>
+                    <section>
+                        <h2>Socket.io RedisStore</h2>
+                        <h3>Production Config (cont.)</h3>
+                        <pre><code>
+io.configure(function () {
+  io.set('store', new RedisStore({
+    nodeId: function () { return <span title="defined elsewhere">nodeId</span> }
+  , redisPub: redisPub
+  , redisSub: redisSub
+  , redisClient: redisClient
+  }))
+})
+                        </code></pre>
+                    </section>
+                </section>
+
+                <!-- Use a REPL -->
+                <section>
+                    <section>
+                        <h2>REPL</h2>
+                        <p>Logging is fantastic. It helps you know <b>when</b> things are going wrong.</p>
+                        <pre><code>
+app.on('error', function (err) {
+    console.error(err)
+})
+                        </code></pre>
+                        <p class=fragment>Now what?</p>
+                    </section>
+                    <section>
+                        <h2>Without a REPL</h2>
+                        <p>To the code...</p>
+                        <p class=fragment>Sometimes, it's your code.</p>
+                        <p class=fragment>Many times it is not. It's network or it's your database.</p>
+                        <p class=fragment>It's only there if you put it there.</p>
+                    </section>
+                    <section>
+                        <h2>Adding a REPL</h2>
+                        <pre><code contenteditable>
+                            var redis = require('redis')
+                            , redisClient = redis
+                            .createClient(<span title="defined elsewhere">port</span>, <span title="defined elsewhere">hostname</span>)
+                            , redisSub = redis
+                            .createClient(<span title="defined elsewhere">port</span>, <span title="defined elsewhere">hostname</span>)
+
+                            redisClient.on('error', function (err) {
+                            console.error(err)
+                            })
+
+                            redisSub.on('error', function (err) {
+                            console.error(err)
+                            })
+                        </code></pre>
+                        <p class=fragment>Now you're ready for production chaos.</p>
+                    </section>
+                    <section>
+                        <h2>REPL time!!!</h2>
+                        <p class=fragment>
+                            <img class=highlight src="./assets/dancing_banana.gif">
+                        </p>
+                        <pre><code contenteditable>
+                            var net = require('net')
+                              , options = { name: 'dshaw' }
+
+                            net.createServer(function (socket) {
+                                repl.start(options.name + "> ", socket).context.app = app
+                            }).listen("/tmp/repl-app-" + options.name);
+                        </code></pre>
+                    </section>
+                </section>
+
+                <section>
+                    <h1>Questions?</h1>
+                    <h3 class="inverted">@dshaw</h3>
+
+                    <p>More at: <a href="http://github.com/dshaw">github.com/dshaw</a></p>
+                </section>
+
+                <!-- What's next? -->
+                <section>
+                    <h1>What's next?</h1>
+                    <h2 class=fragment>NodeConf - July 2-3</h2>
+                    <h2 class=fragment>LXJS - September 7-8</h2>
+
+                    <h3 class="inverted">Follow me on Twitter: @dshaw</h3>
+                </section>
+
+				<section>
+					<section data-state="alert">
+						<h2>Global State</h2>
+						<p>
+							Set <code>data-state="something"</code> on a slide and <code>"something"</code>
+							will be added as a class to the document element when the slide is open. This let's you
+							apply broader style changes, like switching the background.
+						</p>
+						<a href="#/7/1" class="image">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png">
+						</a>
+					</section>
+					<section data-state="blackout">
+						<h2>"blackout"</h2>
+						<a href="#/7/2" class="image">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png">
+						</a>
+					</section>
+					<section data-state="soothe">
+						<h2>"soothe"</h2>
+						<a href="#/7/0" class="image">
+							<img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" style="-webkit-transform: rotate(180deg);">
+						</a>
+					</section>
+				</section>
+
+				<section data-state="customevent">
+					<h2>Custom Events</h2>
+					<p>
+						Additionally custom events can be triggered on a per slide basis by binding to the <code>data-state</code> name.
+					</p>
+					<pre><code contenteditable style="font-size: 18px; margin-top: 20px;">Reveal.addEventListener( 'customevent', function() {
+	alert( '"customevent" has fired' );
+} );
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Clever Quotes</h2>
+					<p>
+						These guys come in two forms, inline: <q cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
+						The nice thing about standards is that there are so many to choose from</q> and block:
+					</p>
+					<blockquote cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
+						For years there has been a theory that millions of monkeys typing at random on millions of typewriters would 
+						reproduce the entire works of Shakespeare. The Internet has proven this theory to be untrue.
+					</blockquote>
+				</section>
+				
+				<section>
+					<h2>Pretty Code</h2>
+					<pre><code contenteditable>
+var supports3DTransforms =  document.body.style['webkitPerspective'] !== undefined || 
+				document.body.style['MozPerspective'] !== undefined ||
+				document.body.style['perspective'] !== undefined;
+
+function linkify( selector ) {
+    if( supports3DTransforms ) {
+        
+        var nodes = document.querySelectorAll( selector );
+
+        for( var i = 0, len = nodes.length; i < len; i++ ) {
+            var node = nodes[i];
+
+            if( !node.className || !node.className.match( /roll/g ) ) {
+                node.className += ' roll';
+                node.innerHTML = '<span data-title="'+ node.text +'">' + node.innerHTML + '</span>';
+            }
+        };
+    }
+}
+
+linkify( 'a' );
+					</code></pre>
+					<p>Courtesy of <a href="http://softwaremaniacs.org/soft/highlight/en/description/">highlight.js</a>.</p>
+				</section>
+				
+				<section>
+					<h2>Intergalactic Interconnections</h2>
+					<p>
+						You can link between slides internally,<br/>
+						<a href="#/2/3">like this</a>.
+					</p>
+				</section>
+
+				<section>
+					<h2>Fragmented Views</h2>
+					<p>Hit the next arrow...</p>
+					<p class="fragment">... to step through ...</p>
+					<ol>
+						<li class="fragment"><code>any type</code></li>
+						<li class="fragment"><em>of view</em></li>
+						<li class="fragment"><strong>fragments</strong></li>
+					</ol>
+				</section>
+				
+				<section>
+					<h2>Spectacular image!</h2>
+					<a class="image" href="http://hakim.se/experiments/html5/breakdom/" target="_blank">
+						<img width="320" height="412" src="https://s3.amazonaws.com/hakim-static/reveal-js/breakdom.png">
+					</a>
+				</section>
+				
+				<section>
+					<h2>Stellar Links</h2>
+					<ul>
+						<li><a href="https://github.com/hakimel/reveal.js">Source code on github</a></li>
+						<li><a href="http://hakim.se/projects/reveal-js">Read more on my site</a></li>
+						<li><a href="http://twitter.com/hakimel">Follow me on Twitter</a></li>
+					</ul>
+				</section>
+				
+				<section>
+					<h1>THE END</h1>
+					<h3 class="inverted">BY Hakim El Hattab / hakim.se</h3>
+				</section>
+			</div>
+
+			<!-- The navigational controls UI -->
+			<aside class="controls">
+				<a class="left" href="#">&#x25C4;</a>
+				<a class="right" href="#">&#x25BA;</a>
+				<a class="up" href="#">&#x25B2;</a>
+				<a class="down" href="#">&#x25BC;</a>
+			</aside>
+
+			<!-- Displays presentation progress, max value changes via JS to reflect # of slides -->
+			<div class="progress"><span></span></div>
+			
+		</div>
+		
+		<script src="js/reveal.js"></script>
+
+		<!-- Optional libraries for code syntax highlighting and classList support in IE9 -->
+		<script src="lib/highlight.js"></script>
+		<script src="lib/classList.js"></script>
+		
+		<script>
+			// Parse the query string into a key/value object
+			var query = {};
+			location.search.replace( /[A-Z0-9]+?=(\w*)/gi, function(a) {
+				query[ a.split( '=' ).shift() ] = a.split( '=' ).pop();
+			} );
+
+			// Fires when a slide with data-state=customevent is activated
+			Reveal.addEventListener( 'customevent', function() {
+				alert( '"customevent" has fired' );
+			} );
+
+			// Fires each time a new slide is activated
+			Reveal.addEventListener( 'slidechanged', function( event ) {
+				// event.indexh & event.indexv
+			} );
+
+			Reveal.initialize({
+				// Display controls in the bottom right corner
+				controls: true,
+
+				// Display a presentation progress bar
+				progress: true,
+
+				// If true; each slide will be pushed to the browser history
+				history: true,
+
+				// Loops the presentation, defaults to false
+				loop: false,
+
+				// Flags if mouse wheel navigation should be enabled
+				mouseWheel: true,
+
+				// Apply a 3D roll to links on hover
+				rollingLinks: true,
+
+				// UI style
+				theme: query.theme || 'default', // default/neon
+
+				// Transition style
+				transition: query.transition || 'default' // default/cube/page/concave/linear(2d)
+			});
+
+			hljs.initHighlightingOnLoad();
+		</script>
+
+	</body>
+</html>
