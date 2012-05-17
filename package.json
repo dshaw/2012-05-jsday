@@ -1,0 +1,21 @@
+{
+  "name": "dshaw-talk-2012-05-jsday",
+  "version": "0.0.1",
+  "description": "Node.js Production Secrets",
+  "keywords": [
+    "node.js",
+    "socket.io",
+    "repl"
+  ],
+  "author": "Daniel D. Shaw <dshaw@dshaw.com> (http://dshaw.com)",
+  "dependencies": {
+    "express": "~2.5.9",
+    "optimist": "~0.3.4",
+    "socket.io": "https://github.com/dshaw/socket.io/tarball/patch/redis71",
+    "socket.io-announce": "https://github.com/dshaw/socket.io-announce/tarball/patch/redis71"
+  },
+  "main": "app",
+  "engines": {
+    "node": ">= 0.6.0"
+  }
+}
