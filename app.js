@@ -19,17 +19,24 @@ var app = express.createServer(express.static(__dirname + '/.'))
 
 app.wtf = []
 
-io.sockets.on('connection', function (socket) {
-  socket.emit('nodeId', options.id)
+app.get('/health', function(req, res){
+    res.send({
+        pid: process.pid,
+        memory: process.memoryUsage(),
+        uptime: process.uptime()
+    })
 })
 
-//app.get('/health', )
+app.on('listening', function () {
+    logger.log('listening on :', app.address());
+})
+
+io.sockets.on('connection', function (socket) {
+    socket.emit('nodeId', options.id)
+})
 
 app.listen(options.port);
 
-app.on('listening', function () {
-  logger.log('listening on :', app.address());
-})
 
 // Realtime inspection with a REPL
 if (options.repl) {

@@ -94,23 +94,23 @@
               <section>
                   <h2>Storify</h2>
                   <p><a href="http://storify.com"><img class=experience src="./assets/storify.jpg" style="padding: 5px"></a></p>
-                  <h3 class=fragment>Express</h3>
-                  <h3 class=fragment>MongoDB / Mongoose</h3>
-                  <h3 class=fragment>Redis</h3>
+                  <h3>Express</h3>
+                  <h3>MongoDB / Mongoose</h3>
+                  <h3>Redis</h3>
               </section>
               <section>
                   <h2>Spreecast</h2>
                   <p><a href="http://spreecast.com"><img class=experience src="./assets/spreecast.png" style="padding: 10px"></a></p>
-                  <h3 class=fragment>Socket.io</h3>
-                  <h3 class=fragment>Redis</h3>
-                  <h3 class=fragment>(Express)</h3>
+                  <h3>Socket.io</h3>
+                  <h3>Redis</h3>
+                  <h3>(Express)</h3>
               </section>
               <section>
                   <h2>Voxer</h2>
                   <p><a href="http://voxer.com"><img class=experience src="./assets/voxer.png" style="width: 220px; height: 228px; padding: 20px"></a></p>
-                  <h3 class=fragment>Mobile</h3>
-                  <h3 class=fragment>Redis</h3>
-                  <h3 class=fragment>Riak</h3>
+                  <h3>Mobile</h3>
+                  <h3>Redis</h3>
+                  <h3>Riak</h3>
               </section>
           </section>
 
@@ -151,9 +151,9 @@
             <section>
               <h2>K.I.S.S.</h2>
               <h3>Keep It Small and Simple</h3>
-              <p class=fragment>Small, focused processes > Monolithic</p>
-              <p class=fragment>Applies to both modules and apps.</p>
-              <p class=fragment>Node.js core is kept intentionally simple.</p>
+              <p>Small, focused processes > Monolithic</p>
+              <p>Applies to both modules and apps.</p>
+              <p>Node.js core is kept intentionally simple.</p>
               <br>
               <p class=fragment>The core team's objective is to stop working on Node.js.</p>
             </section>
@@ -254,8 +254,8 @@ app.listen(port)
                   <h2>Production Mode</h2>
 
                   <p>Many larger platforms have a "production mode".</p>
-                  <p class=fragment>And default to "development mode".</p>
-                  <p class=fragment>Use production mode<sup>*</sup>.</p>
+                  <p>And default to "development mode".</p>
+                  <p>Use production mode<sup>*</sup>.</p>
                   <p class=fragment><br><sup>*</sup> Unless you know better.</p>
               </section>
               <section>
@@ -295,6 +295,22 @@ app.configure(function(){
 $ NODE_ENV=production node app.js
                   </code></pre>
                   <p>Rinse. Repeat.</p>
+              </section>
+              <section>
+                  <h2>Socket.io Production Configuration</h2>
+                  <pre><code>
+var io = require('socket.io').listen(80);
+
+io.configure('production', function(){
+  io.enable('browser client etag');
+  io.set('log level', 1);
+  io.set('transports', [ 'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling' ]);
+});
+
+io.configure('development', function(){
+  io.set('transports', ['websocket']);
+});
+                  </code></pre>
               </section>
               <section>
                   <h2>Socket.io RedisStore</h2>
@@ -444,6 +460,43 @@ server.on('error', function (err) {
               </ul>
           </section>
 
+          <!-- Health -->
+          <section>
+              <section>
+                  <h2>How are you doing?</h2>
+                  <p>Create a status or health endpoint.</p>
+                  <ul>
+                      <li>process.memory</li>
+                      <li>process.uptime</li>
+                      <li>process.pid</li>
+                      <li>connections</li>
+                      <li><i>proc: cpu microtime</i></li>
+                  </ul>
+              </section>
+              <section>
+                  <h2>/health</h2>
+                  <pre><code contenteditable>
+app.get('/health', function(req, res){
+  res.send({
+    pid: process.pid,
+    memory: process.memoryUsage(),
+    uptime: process.uptime()
+  })
+})
+                  </code></pre>
+              </section>
+              <section>
+                  <h2>Proc</h2>
+                  <h3>Currently Solaris only.</h3>
+                  <p><a href="http://github.com/dshaw/proc">github.com/dshaw/proc</a></p>
+                  <p>Expose system state via the /proc file system. e.g. <code>/proc/self/usage</code></p>
+                  <pre><code>
+$ proc usage 10008 | json
+                  </code></pre>
+                  <p>Will accept Linux contributions.</p>
+              </section>
+          </section>
+
           <!-- Use a REPL -->
           <section>
               <section>
@@ -477,8 +530,8 @@ net.createServer(function (socket) {
               </section>
               <section>
                   <h2>REPL demo!!!</h2>
-                  <p class=fragment>
-                      <img class=highlight src="./assets/dancing_banana.gif">
+                  <p>
+                      <img class=noborder src="./assets/dancing_banana.gif">
                   </p>
               </section>
           </section>
@@ -493,8 +546,8 @@ net.createServer(function (socket) {
           <!-- What's next? -->
           <section>
               <h1>What's next?</h1>
-              <h2 class=fragment>NodeConf - July 2-3</h2>
-              <h2 class=fragment>LXJS - September 28-29</h2>
+              <h2>NodeConf - July 2-3</h2>
+              <h2>LXJS - September 28-29</h2>
 
               <h3 class="inverted"><a href="http://twitter.com/dshaw">@dshaw</a></h3>
           </section>

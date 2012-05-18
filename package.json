@@ -4,7 +4,11 @@
   "description": "Node.js Production Secrets",
   "keywords": [
     "node.js",
+    "mixture",
+    "express",
     "socket.io",
+    "health",
+    "proc",
     "repl"
   ],
   "author": "Daniel D. Shaw <dshaw@dshaw.com> (http://dshaw.com)",
